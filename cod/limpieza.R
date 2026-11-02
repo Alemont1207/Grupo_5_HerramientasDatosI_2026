@@ -1,12 +1,9 @@
 # ==========================================================================
 # limpieza.R
-#
 # Proyecto grupal — CA-0204
-#
 # Grupo 5: Alessia Aguilar Badilla, Alonso José Alpízar Brenes,
 #          Mariano Morales Carvajal, Derek Escobar Jaramillo,
 #          Deilany Fuentes Barquero
-#
 # Fecha: noviembre 2026
 #
 # Descripción: carga el registro de defunciones del INEC (2005–2024),
@@ -15,7 +12,6 @@
 # grandes causas de muerte,  separa el COVID-19 y crea el grupo de edad,
 # el periodo respecto a la pandemia y COVID-19 y crea el grupo de edad,
 # limpia en data/defunciones_limpio.rds para usarla en metodologia.R.
-# 
 #
 # Datos: Instituto Nacional de Estadística y Censos [INEC]. (2025).
 #        Registro de Defunciones (REGDEF). Estadísticas Vitales de Costa Rica.
