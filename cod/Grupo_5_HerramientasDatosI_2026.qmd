@@ -1,0 +1,216 @@
+---
+title: "¿Qué causas de muerte ganan peso en Costa Rica?"
+author: "Grupo 5"
+date: today
+date-format: "D [de] MMMM [de] YYYY"
+lang: es
+format:
+  pdf:
+    documentclass: article
+    papersize: letter
+    fontsize: 12pt
+    geometry:
+      - top=2.2cm
+      - bottom=2.5cm
+      - left=2.8cm
+      - right=2.8cm
+    linestretch: 1.15
+    number-sections: true
+    colorlinks: true
+    linkcolor: azul
+    urlcolor: azul
+    citecolor: azul
+    fig-pos: "H"
+    include-in-header:
+      text: |
+        \usepackage{newpxtext}
+        \usepackage{microtype}
+        \usepackage{float}
+        \usepackage{xcolor}
+        \definecolor{azul}{HTML}{2B5C8A}
+        \usepackage{titlesec}
+        \titleformat{\section}{\normalsize\bfseries\scshape\color{azul}}{\thesection.}{0.6em}{}
+        \titlespacing*{\section}{0pt}{1.2em}{0.4em}
+        \titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.6em}{}
+        \titlespacing*{\subsection}{0pt}{0.8em}{0.3em}
+        \usepackage{fancyhdr}
+        \pagestyle{fancy}
+        \fancyhf{}
+        \renewcommand{\headrulewidth}{0pt}
+        \cfoot{\footnotesize\thepage}
+        \fancypagestyle{plain}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}\cfoot{\footnotesize\thepage}}
+        \makeatletter
+        \renewcommand{\maketitle}{%
+          \thispagestyle{plain}%
+          \begin{center}
+          {\footnotesize\color{gray} Universidad de Costa Rica · CA-0204 Herramientas de Ciencia de Datos I · II ciclo 2026}\par
+          \vspace{0.8em}
+          {\Large\bfseries\color{azul} \@title\par}
+          \vspace{0.3em}
+          {\large Evolución de las defunciones según causa, 2005–2024\par}
+          \vspace{0.7em}
+          {\small Alessia Aguilar Badilla · Alonso José Alpízar Brenes · Mariano Morales Carvajal\par
+           Derek Escobar Jaramillo · Deilany Fuentes Barquero\par}
+          \vspace{0.3em}
+          {\small\color{gray} Grupo 5 · \@date\par}
+          \end{center}
+          \vspace{-0.4em}
+          {\color{azul}\noindent\rule{\linewidth}{0.8pt}}\par
+          \vspace{0.8em}
+        }
+        \makeatother
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+
+# Paquetes y datos -------------------------------------------------------
+library(tidyverse)
+library(haven)
+
+# Base original del INEC
+defunciones <- read_sav("../data/Defunciones 2005-2024.sav",
+                        col_select = c(anodef, mesdef, sexo, edads,
+                                       causamuer, grgruposcb)) |>
+  rename(año.defuncion = anodef,
+         mes.defuncion = mesdef,
+         edad          = edads,
+         causa.muerte  = causamuer,
+         gran.grupo    = grgruposcb)
+
+# Base limpia generada por cod/limpieza.R
+defunciones_limpio <- readRDS("../data/defunciones_limpio.rds")
+
+# Funciones auxiliares ----------------------------------------------------
+# miles(): número con espacio como separador de miles (444 371)
+miles <- function(x) format(x, big.mark = " ", scientific = FALSE)
+
+# pct(): número con coma decimal (12,5)
+pct <- function(x) format(x, decimal.mark = ",")
+
+# Datos para el texto -----------------------------------------------------
+n_total    <- nrow(defunciones)
+n_antes    <- sum(defunciones$año.defuncion < 2005)
+n_periodo  <- sum(between(defunciones$año.defuncion, 2005, 2024))
+n_edad_999 <- sum(zap_labels(defunciones$edad) == 999 &
+                  between(defunciones$año.defuncion, 2005, 2024))
+n_hombres  <- sum(zap_labels(defunciones$sexo) == 1)
+n_mujeres  <- sum(zap_labels(defunciones$sexo) == 2)
+n_covid    <- sum(str_detect(defunciones$causa.muerte, "^U0[79]"))
+
+n_limpio   <- nrow(defunciones_limpio)
+pct_65     <- round(100 * mean(defunciones_limpio$grupo.edad == "65 o más",
+                               na.rm = TRUE), 1)
+```
+
+# Introducción
+
+La población de Costa Rica está envejeciendo con rapidez. Según la Organización Panamericana de la Salud (OPS, 2024), el país pasó de aproximadamente 3,94 millones de habitantes en el 2000 a 5,13 millones en 2024. En ese mismo periodo, la población de 65 años o más pasó a representar el 12,2 % del total, 6,7 puntos porcentuales más que en el 2000. Una población más longeva tiende a morir por causas distintas, de modo que las enfermedades crónicas ganan peso frente a las infecciosas y las perinatales. A este cambio gradual se sumó la pandemia de COVID-19, que en 2020 y 2021 alteró de forma abrupta el número y la distribución de las defunciones.
+
+Conocer qué causas de muerte ganan o pierden importancia es útil para orientar la política de salud pública. También tiene relevancia actuarial, porque los patrones de mortalidad determinan la probabilidad de supervivencia de una población. Esa probabilidad es la base de los seguros de vida, las anualidades, las pensiones y la seguridad social. Si la supervivencia mejora, aparece el riesgo de longevidad (Office of the Chief Actuary, 2021).
+
+Para el análisis se utiliza el Registro de Defunciones del Instituto Nacional de Estadística y Censos (INEC, 2025). Este registro incluye todas las defunciones ocurridas en el país, junto con el sexo y la edad de la persona fallecida y la causa básica de muerte codificada según la CIE-10. Las causas se analizan con la agrupación oficial del INEC en grandes grupos, lo que permite comparar su peso relativo entre años.
+
+# Objetivo general
+
+Analizar la evolución de la participación porcentual de los grandes grupos de causas de muerte en Costa Rica entre 2014 y 2024, según sexo y edad, para identificar cuáles aumentaron o disminuyeron su importancia relativa antes, durante y después de la pandemia de COVID-19.
+
+# Metodología
+
+## Datos
+
+Se utiliza la base consolidada del Registro de Defunciones del INEC (2025), que reúne las defunciones registradas en Costa Rica entre 2005 y 2024. La base contiene `r miles(n_total)` registros, uno por defunción. De sus variables se conservan las seis que se describen en el @tbl-variables.
+
+| Variable | Descripción |
+|:-------------------|:--------------------------------------------------|
+| `año.defuncion` | Año de la defunción |
+| `mes.defuncion` | Mes de la defunción (1 a 12) |
+| `sexo` | Sexo de la persona fallecida (1 = hombre, 2 = mujer) |
+| `edad` | Edad en años cumplidos (999 = ignorada) |
+| `causa.muerte` | Código CIE-10 de la causa básica de muerte |
+| `gran.grupo` | Gran grupo de causa de muerte del INEC (17 grupos) |
+
+: Variables utilizadas. Fuente: elaboración propia con datos del INEC (2025). {#tbl-variables}
+
+Antes de la limpieza se revisó la calidad de la base. Ninguna variable tiene valores faltantes; sin embargo, el INEC registra la edad con el código 999 cuando no la conoce, lo que ocurre en `r miles(n_edad_999)` defunciones entre 2005 y 2024. Como no corresponde a una edad real, se trata como dato faltante (NA). La variable sexo solo toma los valores hombre (`r miles(n_hombres)` defunciones) y mujer (`r miles(n_mujeres)`).
+
+La base incluye además `r miles(n_antes)` defunciones ocurridas antes de 2005 que se inscribieron de forma tardía. Como esos años no están completos, el análisis se limita a las `r miles(n_periodo)` defunciones ocurridas entre 2005 y 2024. Por la misma razón, 2024 podría estar levemente incompleto, ya que no incluye las defunciones de ese año que se registren después.
+
+Por último, el COVID-19 se registra con varios códigos de la CIE-10 (U07.1, U07.2, U07.9 y U09.9), que suman `r miles(n_covid)` defunciones desde 2020. El INEC los clasifica dentro del grupo de enfermedades infecciosas y parasitarias.
+
+## Limpieza
+
+La limpieza se realizó en R con los paquetes `tidyverse` y `haven`. Primero se conservaron las defunciones ocurridas entre 2005 y 2024, que suman `r miles(n_limpio)`. Luego se codificó el sexo con letras (M y F), la edad ignorada (999) se trató como dato faltante y se creó la fecha de cada defunción a partir de su año y mes, para poder analizarlas como series de tiempo mensuales.
+
+Para estudiar qué causas ganan o pierden importancia, cada defunción se clasificó en las cinco grandes causas de muerte: enfermedades infecciosas y parasitarias, cáncer, enfermedades del sistema circulatorio, enfermedades del sistema respiratorio y causas externas. Para hacer la clasificación se usaron los grandes grupos de causa del INEC (@tbl-causas). El COVID-19 se separó del grupo de infecciosas, al que el INEC lo asigna, ya que de lo contrario el aumento de 2020 y 2021 se interpretaría como un cambio en esa causa. Los grupos restantes se reunieron en la categoría "Otras".
+
+```{r}
+#| label: tbl-causas
+#| tbl-cap: "Clasificación de las defunciones según causa de muerte, 2005–2024. Fuente: elaboración propia con datos del INEC (2025)."
+
+# Grupos del INEC que forman cada causa
+grupos_inec <- tribble(
+  ~causa,          ~grupos,
+  "Circulatorias", "7 (sistema circulatorio)",
+  "Cáncer",        "2 (tumores)",
+  "Externas",      "17 (causas externas)",
+  "Respiratorias", "8 (sistema respiratorio)",
+  "Infecciosas",   "1 (infecciosas y parasitarias), sin COVID-19",
+  "COVID-19",      "Códigos U07 y U09 de la CIE-10",
+  "Otras",         "Los 12 grupos restantes"
+)
+
+defunciones_limpio |>
+  count(causa) |>
+  mutate(porcentaje = pct(round(100 * n / sum(n), 1)),
+         n          = miles(n)) |>
+  left_join(grupos_inec, by = "causa") |>
+  arrange(match(causa, grupos_inec$causa)) |>
+  select(causa, grupos, n, porcentaje) |>
+  knitr::kable(col.names = c("Causa", "Grupos del INEC",
+                             "Defunciones", "%"),
+               align = c("l", "l", "r", "r"))
+```
+
+Por último, para analizar el efecto del envejecimiento, las defunciones se dividieron en dos grupos de edad: menos de 65 años y 65 años o más. Este segundo grupo concentra el `r pct(pct_65)` % de las defunciones del periodo. También se clasificaron según el periodo respecto a la pandemia: antes (2005–2019), durante (2020–2021) y después (2022–2024).
+
+## Técnicas y herramientas
+
+# Resultados
+
+## Análisis exploratorio
+
+## Evolución de las causas de muerte
+
+## Conclusiones
+
+\newpage
+
+# Bibliografía {.unnumbered}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.8em}
+\everypar{\hangindent=1.27cm \hangafter=1}
+
+Engle, R. F., y Granger, C. W. J. (1987). Co-integration and error correction: Representation, estimation, and testing. *Econometrica, 55*(2), 251–276. <https://doi.org/10.2307/1913236>
+
+Instituto Nacional de Estadística y Censos [INEC]. (2025). *Registro de Defunciones (REGDEF): Estadísticas Vitales de Costa Rica* \[Conjunto de datos\]. Catálogo Central de Datos. <https://sistemas.inec.cr/nada5.4/index.php/catalog/REGDEF/>
+
+Johansen, S. (1988). Statistical analysis of cointegration vectors. *Journal of Economic Dynamics and Control, 12*(2–3), 231–254. <https://doi.org/10.1016/0165-1889(88)90041-3>
+
+Office of the Chief Actuary. (2021). *Mortality projections for social security programs in Canada: Actuarial study No. 22*. Office of the Superintendent of Financial Institutions Canada. <https://www.osfi-bsif.gc.ca/sites/default/files/import-media/oac-actuarial-reports/studies/2021-12/en/CPPmortality2021.pdf>
+
+Organización Panamericana de la Salud [OPS]. (2024). *Perfil de país: Costa Rica. Salud en las Américas*. <https://hia.paho.org/es/perfiles-de-pais/costa-rica>
+
+Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L. D., François, R., Grolemund, G., Hayes, A., Henry, L., Hester, J., Kuhn, M., Pedersen, T. L., Miller, E., Bache, S. M., Müller, K., Ooms, J., Robinson, D., Seidel, D. P., Spinu, V., … Yutani, H. (2019). Welcome to the tidyverse. *Journal of Open Source Software, 4*(43), 1686. <https://doi.org/10.21105/joss.01686>
+\newpage
+
+\everypar{}
+
+# Anexos {.unnumbered}
+
+Repositorio del proyecto: <https://github.com/Alemont1207/Grupo_5_HerramientasDatosI_2026>
