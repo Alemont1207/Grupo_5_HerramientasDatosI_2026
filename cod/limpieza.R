@@ -1,12 +1,21 @@
 # ==========================================================================
 # limpieza.R
+#
 # Proyecto grupal — CA-0204
+#
 # Grupo 5: Alessia Aguilar Badilla, Alonso José Alpízar Brenes,
 #          Mariano Morales Carvajal, Derek Escobar Jaramillo,
 #          Deilany Fuentes Barquero
+#
 # Fecha: noviembre 2026
 #
-# Descripción: carga el registro de defunciones del INEC (2005–2024)...
+# Descripción: carga el registro de defunciones del INEC (2005–2024),
+# revisa la calidad de los datos y prepara la base para el análisis:
+# corrige el sexo y la edad, clasifica cada defunción en las cinco
+# grandes causas de muerte,  separa el COVID-19 y crea el grupo de edad,
+# el periodo respecto a la pandemia y COVID-19 y crea el grupo de edad,
+# limpia en data/defunciones_limpio.rds para usarla en metodologia.R.
+# 
 #
 # Datos: Instituto Nacional de Estadística y Censos [INEC]. (2025).
 #        Registro de Defunciones (REGDEF). Estadísticas Vitales de Costa Rica.
@@ -75,3 +84,50 @@ print_labels(defunciones$gran.grupo)
 defunciones |>
   filter(str_detect(causa.muerte, "^U0[79]")) |>
   count(año.defuncion, causa.muerte)
+
+# Limpieza -----------------------------------------------------------------
+
+# 1. Se quitan las etiquetas de SPSS para trabajar solo con los valores y
+#    se conservan los años completos (2005–2024, 443 411 defunciones).
+# 2. Sexo con letras "M" (hombre) y "F" (mujer).
+# 3. La edad ignorada (999) pasa a NA porque no es una edad real.
+# 4. Cada defunción se clasifica en las cinco grandes causas infecciosas, 
+#    cáncer, circulatorias, respiratorias y externas.
+#    El COVID-19 (códigos U07 y U09) se separa de las infecciosas para no 
+#    distorsionar su tendencia, y los demás grupos del INEC se juntan en "Otras".
+# 5. Grupo de edad para analizar el envejecimiento: "Menos de 65" y
+#    "65 o más". Las defunciones con edad NA quedan como NA ***
+# 6. Periodo respecto a la pandemia: "Antes" (2005–2019), "Pandemia"
+#    (2020–2021) y "Después" (2022–2024).
+# 7. Fecha del mes de la defunción (día 1) para armar las series de tiempo
+#    mensuales.
+
+defunciones_limpio <- defunciones |>
+  mutate(across(everything(), zap_labels)) |>
+  filter(between(año.defuncion, 2005, 2024)) |>
+  mutate(sexo  = case_when(sexo == 1 ~ "M",
+                           sexo == 2 ~ "F",
+                           .default  = "Sin dato"),
+         edad  = na_if(edad, 999),
+         causa = case_when(
+           str_detect(causa.muerte, "^U0[79]") ~ "COVID-19",
+           gran.grupo == 1  ~ "Infecciosas",
+           gran.grupo == 2  ~ "Cáncer",
+           gran.grupo == 7  ~ "Circulatorias",
+           gran.grupo == 8  ~ "Respiratorias",
+           gran.grupo == 17 ~ "Externas",
+           .default         = "Otras"),
+         grupo.edad = case_when(edad < 65  ~ "Menos de 65",
+                                edad >= 65 ~ "65 o más"),
+         periodo = case_when(año.defuncion <= 2019 ~ "Antes",
+                             año.defuncion <= 2021 ~ "Pandemia",
+                             .default              = "Después"),
+         fecha = make_date(año.defuncion, mes.defuncion, 1))
+
+
+# Exportación --------------------------------------------------------------
+
+# Se guarda la base limpia (una fila por defunción) para usarla en
+# metodologia.R.
+
+saveRDS(defunciones_limpio, "data/defunciones_limpio.rds")
