@@ -9,6 +9,7 @@ format:
     documentclass: article
     papersize: letter
     fontsize: 12pt
+    mathfont: "texgyrepagella-math.otf"
     geometry:
       - top=2.2cm
       - bottom=2.5cm
@@ -85,12 +86,21 @@ defunciones <- read_sav("../data/Defunciones 2005-2024.sav",
 # Base limpia generada por cod/limpieza.R
 defunciones_limpio <- readRDS("../data/defunciones_limpio.rds")
 
+# Resultados generados por cod/metodologia.R
+resumen_despues <- readRDS("../data/resumen_despues.rds")
+
 # Funciones auxiliares ----------------------------------------------------
 # miles(): número con espacio como separador de miles (444 371)
 miles <- function(x) format(x, big.mark = " ", scientific = FALSE)
 
-# pct(): número con coma decimal (12,5)
-pct <- function(x) format(x, decimal.mark = ",")
+# pct(): número con un decimal y coma decimal (12,5)
+pct <- function(x) format(x, nsmall = 1, decimal.mark = ",", trim = TRUE)
+
+# valor(): saca un resultado de resumen_despues para una causa y sexo
+valor <- function(causa_, sexo_, columna) {
+  resumen_despues[[columna]][resumen_despues$causa == causa_ &
+                             resumen_despues$sexo  == sexo_]
+}
 
 # Datos para el texto -----------------------------------------------------
 n_total    <- nrow(defunciones)
@@ -113,11 +123,11 @@ La población de Costa Rica está envejeciendo con rapidez. Según la Organizaci
 
 Conocer qué causas de muerte ganan o pierden importancia es útil para orientar la política de salud pública. También tiene relevancia actuarial, porque los patrones de mortalidad determinan la probabilidad de supervivencia de una población. Esa probabilidad es la base de los seguros de vida, las anualidades, las pensiones y la seguridad social. Si la supervivencia mejora, aparece el riesgo de longevidad (Office of the Chief Actuary, 2021).
 
-Para el análisis se utiliza el Registro de Defunciones del Instituto Nacional de Estadística y Censos (INEC, 2025). Este registro incluye todas las defunciones ocurridas en el país, junto con el sexo y la edad de la persona fallecida y la causa básica de muerte codificada según la CIE-10. Las causas se analizan con la agrupación oficial del INEC en grandes grupos, lo que permite comparar su peso relativo entre años.
+Para el análisis se utiliza el Registro de Defunciones del Instituto Nacional de Estadística y Censos (INEC, 2025), que incluye todas las defunciones ocurridas en el país, junto con el sexo y la edad de la persona fallecida y la causa básica de muerte codificada según la CIE-10. Las defunciones se agrupan en cinco grandes causas y se compara la tendencia de cada una antes de la pandemia con lo ocurrido después.
 
 # Objetivo general
 
-Analizar la evolución de la participación porcentual de los grandes grupos de causas de muerte en Costa Rica entre 2014 y 2024, según sexo y edad, para identificar cuáles aumentaron o disminuyeron su importancia relativa antes, durante y después de la pandemia de COVID-19.
+Identificar qué causas de muerte ganaron o perdieron importancia en Costa Rica entre 2005 y 2024, según sexo, mediante la estimación de la tendencia de cada una de las cinco grandes causas. 
 
 # Metodología
 
@@ -144,9 +154,9 @@ Por último, el COVID-19 se registra con varios códigos de la CIE-10 (U07.1, U0
 
 ## Limpieza
 
-La limpieza se realizó en R con los paquetes `tidyverse` y `haven`. Primero se conservaron las defunciones ocurridas entre 2005 y 2024, que suman `r miles(n_limpio)`. Luego se codificó el sexo con letras (M y F), la edad ignorada (999) se trató como dato faltante y se creó la fecha de cada defunción a partir de su año y mes, para poder analizarlas como series de tiempo mensuales.
+La limpieza se realizó en R (R Core Team, 2026) con los paquetes `tidyverse` (Wickham et al., 2019) y `haven`. Primero se conservaron las defunciones ocurridas entre 2005 y 2024, que suman `r miles(n_limpio)`. Luego se codificó el sexo con letras (M y F), la edad ignorada (999) se trató como dato faltante y se creó la fecha de cada defunción a partir de su año y mes.
 
-Para estudiar qué causas ganan o pierden importancia, cada defunción se clasificó en las cinco grandes causas de muerte: enfermedades infecciosas y parasitarias, cáncer, enfermedades del sistema circulatorio, enfermedades del sistema respiratorio y causas externas. Para hacer la clasificación se usaron los grandes grupos de causa del INEC (@tbl-causas). El COVID-19 se separó del grupo de infecciosas, al que el INEC lo asigna, ya que de lo contrario el aumento de 2020 y 2021 se interpretaría como un cambio en esa causa. Los grupos restantes se reunieron en la categoría "Otras".
+Cada defunción se clasificó en cinco grandes causas de muerte: enfermedades infecciosas y parasitarias, cáncer, enfermedades del sistema circulatorio, enfermedades del sistema respiratorio y causas externas, a partir de los grandes grupos de causa del INEC (@tbl-causas). El COVID-19 se separó del grupo de infecciosas, al que el INEC lo asigna, ya que de lo contrario el aumento de 2020 y 2021 se interpretaría como un cambio en esa causa. Los grupos restantes se reunieron en la categoría "Otras".
 
 ```{r}
 #| label: tbl-causas
@@ -176,17 +186,134 @@ defunciones_limpio |>
                align = c("l", "l", "r", "r"))
 ```
 
-Por último, para analizar el efecto del envejecimiento, las defunciones se dividieron en dos grupos de edad: menos de 65 años y 65 años o más. Este segundo grupo concentra el `r pct(pct_65)` % de las defunciones del periodo. También se clasificaron según el periodo respecto a la pandemia: antes (2005–2019), durante (2020–2021) y después (2022–2024).
+Por último, las defunciones se dividieron en dos grupos de edad (menos de 65 años y 65 años o más) y según el periodo respecto a la pandemia: antes (2005–2019), durante (2020–2021) y después (2022–2024). Las personas de 65 años o más concentran el `r pct(pct_65)` % de las defunciones del periodo.
 
 ## Técnicas y herramientas
+
+Primero se calculó, para cada año y sexo, el porcentaje de las defunciones que corresponde a cada causa, con el fin de describir su peso relativo a lo largo del periodo.
+
+Luego, para medir si cada causa ganó o perdió importancia, se estimó su tendencia antes de la pandemia. Para cada causa y sexo se ajustó, con los datos de 2005 a 2019, una regresión lineal del logaritmo de las defunciones anuales contra el año:
+
+$$
+\ln(D_t) = a + b\,t
+$$
+
+donde $D_t$ es el número de defunciones en el año $t$. Se usa el logaritmo para que los cambios se midan en términos relativos (en porcentaje) y las causas con distinto número de defunciones, como las circulatorias y las infecciosas, se puedan comparar en la misma escala. La pendiente $b$ se transforma en el cambio porcentual promedio por año:
+
+$$
+\text{Cambio anual} = 100\left(e^{b} - 1\right) \%
+$$
+
+El mismo procedimiento se aplicó al total de defunciones, que sirve de referencia: una causa gana peso si crece más rápido que el total.
+
+Por último, con la recta de cada causa se calcularon las defunciones esperadas para 2020–2024 si la tendencia previa se hubiera mantenido, $\widehat{D}_t = e^{\,a + b\,t}$, y se compararon con las observadas:
+
+$$
+\text{Diferencia} = 100\left(\frac{D_t}{\widehat{D}_t} - 1\right) \%
+$$
+
+Este procedimiento es análogo al que se utiliza para estimar el exceso de mortalidad. Para saber si cada causa volvió a su tendencia, se promedió esta diferencia en los años posteriores a la pandemia (2022–2024). Todo el análisis se realizó en R con el paquete `tidyverse`.
 
 # Resultados
 
 ## Análisis exploratorio
 
+```{r}
+#| label: fig-causas-sexo
+#| fig-cap: "Porcentaje de las defunciones de cada año según causa y sexo, Costa Rica, 2005–2024. La zona gris marca la pandemia (2020–2021). Fuente: elaboración propia con datos del INEC (2025)."
+#| fig-width: 6.5
+#| fig-height: 4.2
+
+# Porcentaje anual de las defunciones por causa y sexo. Se calcula sobre el
+# total de cada año y sexo, incluyendo COVID-19 y "Otras", que no se grafican.
+porcentaje_sexo <- defunciones_limpio |>
+  count(año.defuncion, sexo, causa, name = "defunciones") |>
+  mutate(porcentaje = defunciones / sum(defunciones),
+         .by = c(año.defuncion, sexo)) |>
+  filter(!causa %in% c("Otras", "COVID-19")) |>
+  mutate(sexo = if_else(sexo == "F", "Mujeres", "Hombres"),
+         sexo = factor(sexo, levels = c("Mujeres", "Hombres")))
+
+externas <- porcentaje_sexo |> filter(causa == "Externas")
+
+# Etiquetas al final de cada línea. En mujeres, respiratorias y externas
+# quedan muy cerca en 2024, así que se separan un poco para que no choquen.
+etiquetas_sexo <- porcentaje_sexo |>
+  filter(año.defuncion == 2024) |>
+  mutate(y_etiqueta = porcentaje + case_when(
+    sexo == "Mujeres" & causa == "Respiratorias" ~  0.012,
+    sexo == "Mujeres" & causa == "Externas"      ~ -0.012,
+    .default = 0))
+
+ggplot(porcentaje_sexo,
+       aes(x = año.defuncion, y = porcentaje, group = causa)) +
+  annotate("rect", xmin = 2019.5, xmax = 2021.5, ymin = -Inf, ymax = Inf,
+           fill = "grey93") +
+  geom_text(data = tibble(sexo = factor("Mujeres",
+                                        levels = c("Mujeres", "Hombres"))),
+            aes(x = 2020.5, y = 0.33, label = "Pandemia"),
+            inherit.aes = FALSE, colour = "grey45", size = 3) +
+  geom_line(colour = "grey75", linewidth = 0.6) +
+  geom_line(data = externas, colour = "#2B5C8A", linewidth = 1.2) +
+  geom_text(data = filter(etiquetas_sexo, causa != "Externas"),
+            aes(y = y_etiqueta, label = causa),
+            hjust = -0.1, size = 3, colour = "grey45") +
+  geom_text(data = filter(etiquetas_sexo, causa == "Externas"),
+            aes(y = y_etiqueta, label = causa),
+            hjust = -0.1, size = 3, colour = "#2B5C8A") +
+  facet_wrap(~ sexo) +
+  scale_x_continuous(breaks = seq(2005, 2024, 5),
+                     expand = expansion(mult = c(0.02, 0.35))) +
+  scale_y_continuous(labels = scales::label_percent(), limits = c(0, 0.34)) +
+  labs(title = "Las causas externas pesan tres veces más en los hombres",
+       x = NULL, y = "Porcentaje de las defunciones") +
+  theme_minimal(base_size = 11) +
+  theme(panel.grid.minor = element_blank(),
+        plot.title.position = "plot")
+```
+
 ## Evolución de las causas de muerte
 
+```{r}
+#| label: fig-respiratorias
+#| fig-cap: "Porcentaje de las defunciones de cada año según causa, Costa Rica, 2005–2024. Fuente: elaboración propia con datos del INEC (2025)."
+#| fig-width: 6.5
+#| fig-height: 4
+
+# Porcentaje anual de las defunciones por causa (ambos sexos)
+porcentaje_anual <- defunciones_limpio |>
+  count(año.defuncion, causa, name = "defunciones") |>
+  mutate(porcentaje = defunciones / sum(defunciones), .by = año.defuncion) |>
+  filter(!causa %in% c("Otras", "COVID-19"))
+
+respiratorias <- porcentaje_anual |> filter(causa == "Respiratorias")
+etiquetas     <- porcentaje_anual |> filter(año.defuncion == 2024)
+
+ggplot(porcentaje_anual, aes(x = año.defuncion, y = porcentaje, group = causa)) +
+  annotate("rect", xmin = 2019.5, xmax = 2021.5, ymin = -Inf, ymax = Inf,
+           fill = "grey93") +
+  annotate("text", x = 2020.5, y = 0.32, label = "Pandemia",
+           colour = "grey45", size = 3.5) +
+  geom_line(colour = "grey75", linewidth = 0.7) +
+  geom_line(data = respiratorias, colour = "#2B5C8A", linewidth = 1.2) +
+  geom_text(data = filter(etiquetas, causa != "Respiratorias"),
+            aes(label = causa), hjust = -0.1, size = 3.5, colour = "grey45") +
+  geom_text(data = filter(etiquetas, causa == "Respiratorias"),
+            aes(label = causa), hjust = -0.1, size = 3.5, colour = "#2B5C8A") +
+  scale_x_continuous(breaks = seq(2005, 2024, 5),
+                     expand = expansion(mult = c(0.02, 0.20))) +
+  scale_y_continuous(labels = scales::label_percent(), limits = c(0, NA)) +
+  labs(title = "Las respiratorias no recuperaron su peso después de la pandemia",
+       x = NULL, y = "Porcentaje de las defunciones") +
+  theme_minimal(base_size = 11) +
+  theme(panel.grid.minor = element_blank(),
+        plot.title.position = "plot")
+```
+
+
+
 ## Conclusiones
+
 
 \newpage
 
@@ -196,17 +323,16 @@ Por último, para analizar el efecto del envejecimiento, las defunciones se divi
 \setlength{\parskip}{0.8em}
 \everypar{\hangindent=1.27cm \hangafter=1}
 
-Engle, R. F., y Granger, C. W. J. (1987). Co-integration and error correction: Representation, estimation, and testing. *Econometrica, 55*(2), 251–276. <https://doi.org/10.2307/1913236>
-
 Instituto Nacional de Estadística y Censos [INEC]. (2025). *Registro de Defunciones (REGDEF): Estadísticas Vitales de Costa Rica* \[Conjunto de datos\]. Catálogo Central de Datos. <https://sistemas.inec.cr/nada5.4/index.php/catalog/REGDEF/>
-
-Johansen, S. (1988). Statistical analysis of cointegration vectors. *Journal of Economic Dynamics and Control, 12*(2–3), 231–254. <https://doi.org/10.1016/0165-1889(88)90041-3>
 
 Office of the Chief Actuary. (2021). *Mortality projections for social security programs in Canada: Actuarial study No. 22*. Office of the Superintendent of Financial Institutions Canada. <https://www.osfi-bsif.gc.ca/sites/default/files/import-media/oac-actuarial-reports/studies/2021-12/en/CPPmortality2021.pdf>
 
 Organización Panamericana de la Salud [OPS]. (2024). *Perfil de país: Costa Rica. Salud en las Américas*. <https://hia.paho.org/es/perfiles-de-pais/costa-rica>
 
+R Core Team. (2026). *R: A language and environment for statistical computing* (Versión 4.6.1) \[Software\]. R Foundation for Statistical Computing. <https://www.R-project.org/>
+
 Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L. D., François, R., Grolemund, G., Hayes, A., Henry, L., Hester, J., Kuhn, M., Pedersen, T. L., Miller, E., Bache, S. M., Müller, K., Ooms, J., Robinson, D., Seidel, D. P., Spinu, V., … Yutani, H. (2019). Welcome to the tidyverse. *Journal of Open Source Software, 4*(43), 1686. <https://doi.org/10.21105/joss.01686>
+
 \newpage
 
 \everypar{}
