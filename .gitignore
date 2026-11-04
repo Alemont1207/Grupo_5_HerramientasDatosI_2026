@@ -4,3 +4,6 @@
 .DS_Store
 data/*.rds
 res/*.qmd
+
+/.quarto/
+**/*.quarto_ipynb
