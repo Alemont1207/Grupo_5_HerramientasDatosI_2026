@@ -27,10 +27,10 @@ library(haven)  # lectura de archivos .sav (SPSS)
 # variables que se usan en el análisis. La base trae etiquetas de SPSS:
 # sexo, mes y los nombres de los grandes grupos de causa de muerte.
 defunciones <- read_sav("data/Defunciones 2005-2024.sav",
-                        col_select = c(anodef, mesdef, sexo, edads,
+                        col_select = c(provincia, anodef, mesdef, sexo, edads,
                                        causamuer, grgruposcb)) |>
   rename(año.defuncion = anodef,      # año de la defunción
-         mes.defuncion = mesdef,      # mes de la defunción (1 a 12)
+         mes.defuncion = mesdef,# mes de la defunción (1 a 12)
          edad          = edads,       # edad en años cumplidos
          causa.muerte  = causamuer,   # código CIE-10 de la causa básica
          gran.grupo    = grgruposcb)  # gran grupo de causa del INEC (17)
