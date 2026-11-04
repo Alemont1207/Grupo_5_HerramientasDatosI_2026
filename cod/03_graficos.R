@@ -82,3 +82,44 @@ g_evolucion <- ggplot(porcentaje_anual, aes(x = año.defuncion, y = porcentaje, 
   theme(panel.grid.minor = element_blank(),
         plot.title.position = "plot")
 
+#Tabla 1. 
+
+tabla_resultados <- defunciones_limpio |>
+  count(año.defuncion, causa, name = "defunciones") |>
+  mutate(
+    porcentaje = 100 * defunciones / sum(defunciones),
+    .by = año.defuncion
+  ) |>
+  filter(
+    año.defuncion %in% c(2005, 2019, 2021, 2024),
+    causa %in% c("Circulatorias", "Cáncer", "Externas",
+                 "Infecciosas", "Respiratorias")
+  ) |>
+  select(causa, año.defuncion, porcentaje) |>
+  pivot_wider(
+    names_from = año.defuncion,
+    values_from = porcentaje
+  ) |>
+  arrange(match(causa, c("Circulatorias", "Cáncer",
+                         "Externas", "Infecciosas",
+                         "Respiratorias")))
+
+# figura 2. comparacion 
+
+tabla_comparacion <- defunciones_limpio |>
+  filter(año.defuncion %in% c(2019, 2024)) |>
+  count(año.defuncion, causa, name = "defunciones") |>
+  filter(causa %in% c("Circulatorias", "Cáncer",
+                      "Externas", "Respiratorias",
+                      "Infecciosas")) |>
+  tidyr::pivot_wider(
+    names_from = año.defuncion,
+    values_from = defunciones,
+    names_prefix = "año_"
+  ) |>
+  mutate(
+    variacion = round(
+      100 * (año_2024 / año_2019 - 1), 1
+    )
+  )
+
