@@ -82,6 +82,9 @@ conteo_crudo <- readRDS("../data/conteo_crudo.rds")
 # Resultados generados por cod/01_metodologia.R
 resumen_despues <- readRDS("../data/resumen_despues.rds")
 
+series_anuales <- readRDS("../data/series_anuales.rds")
+
+
 # Funciones auxiliares ----------------------------------------------------
 # miles(): número con espacio como separador de miles (444 371)
 miles <- function(x) format(x, big.mark = " ", scientific = FALSE)
@@ -204,15 +207,14 @@ Este procedimiento es análogo al que se utiliza para estimar el exceso de morta
 
 ## Análisis exploratorio
 
+
 La figura @fig-respiratorias muestra que las enfermedades circulatorias y el cáncer mantuvieron las mayores participaciones entre las cinco categorías analizadas durante 2005–2024. Sin embargo, su evolución fue distinta. Según la Tabla @tbl-resultados, las enfermedades circulatorias pasaron del 29,2 % de las defunciones en 2005 al 25,6 % en 2019, mientras que el cáncer permaneció relativamente estable, con participaciones del 22,6 % y 22,7 %, respectivamente. Esto evidencia que la composición de las defunciones ya presentaba cambios antes de la pandemia. 
 
 Cabe destacar que en el año 2021 se observa una reducción en la participación de las cinco categorías representadas. Las enfermedades circulatorias descendieron al 23,1 % y el cáncer al 18,7 %, mientras que las enfermedades respiratorias pasaron del 9,16 % en 2019 al 5,59 % en 2021. Sin embargo, se deben considerar las disminuciones presentadas a sabiendas de que las defunciones atribuidas al COVID-19 se clasificaron por separado y se incluyeron en el total utilizado para calcular los porcentajes.
 
 Por otra parte, en el año 2024, las enfermedades circularias alcanzaron el 27,9% superando su participación en el 2019, asimismo, las causas externas también recuperaron su contibución anterior a la pandemia. En cambio, las enfermedades respiratorias alcanzaron un 6,66%, cifra menor al año 2019. Esta fue la pérdida más significativa entre las cinco categorías al comparar su evolución del año 2019 al 2024.
 
-
 ## Evolución de las causas de muerte
-
 ```{r}
 #| label: fig-respiratorias
 #| fig-cap: "Evolución de la participación porcentual de las principales causas de muerte en Costa Rica, 2005–2024. Fuente: elaboración propia con datos del INEC (2025)."
