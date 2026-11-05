@@ -366,6 +366,85 @@ defunciones_limpio |>
            ~ round(.x, 2)))
 ```
 
+## Comparación de defunciones observadas frente a la tendencia esperada
+
+A partir de los modelos de regresión log-lineal descritos en la metodología y estimados con la serie 2005–2019, se calcularon las defunciones anuales esperadas ($\widehat{D}_t$) para el quinquenio 2020–2024 en caso de haberse mantenido las condiciones pre-pandemia. La @fig-observado-esperado contrasta esta trayectoria esperada con las defunciones efectivamente inscritas ante el INEC, diferenciando por sexo para las cinco causas de defunción. En la gráfica, las líneas continuas corresponden a las observaciones reales (azul en hombres y rosado en mujeres), las líneas punteadas representan la proyección de la tendencia histórica (anaranjado en hombres y morado en mujeres) y la franja vertical sombreada delimita el periodo pandémico (2020–2021).
+
+```{r}
+#| label: fig-observado-esperado
+#| fig-cap: "Defunciones observadas y tendencia esperada (2020–2024) según causa y sexo en Costa Rica. Fuente: elaboración propia con datos del INEC (2025)."
+#| fig-width: 6.8
+#| fig-height: 5.2
+
+series_anuales <- readRDS("../data/series_anuales.rds")
+comparacion    <- readRDS("../data/comparacion.rds")
+
+causas_5 <- c("Circulatorias", "Cáncer", "Externas", "Respiratorias", "Infecciosas")
+
+obs_sexo <- series_anuales |>
+  filter(causa %in% causas_5, sexo %in% c("F", "M")) |>
+  mutate(sexo_lbl = if_else(sexo == "F", "Mujeres", "Hombres"))
+
+esp_sexo <- comparacion |>
+  filter(causa %in% causas_5, sexo %in% c("F", "M")) |>
+  mutate(sexo_lbl = if_else(sexo == "F", "Mujeres", "Hombres"))
+
+conector_sexo <- obs_sexo |>
+  filter(año == 2019) |>
+  rename(esperado = defunciones)
+
+esp_sexo_grafico <- bind_rows(conector_sexo, esp_sexo)
+
+df_plot_5 <- bind_rows(
+  obs_sexo |> 
+    transmute(año, causa, valor = defunciones, 
+              serie = paste(sexo_lbl, "- Observado"),
+              tipo_linea = "Observado"),
+  esp_sexo_grafico |> 
+    transmute(año, causa, valor = esperado, 
+              serie = paste(sexo_lbl, "- Esperado"),
+              tipo_linea = "Esperado")
+) |>
+  mutate(
+    causa = factor(causa, levels = causas_5),
+    serie = factor(serie, levels = c("Hombres - Observado", "Hombres - Esperado",
+                                     "Mujeres - Observado", "Mujeres - Esperado"))
+  )
+
+colores_serie <- c(
+  "Hombres - Observado" = "#1F77B4",
+  "Hombres - Esperado"  = "#FF7F0E",
+  "Mujeres - Observado" = "#E377C2",
+  "Mujeres - Esperado"  = "#9467BD"
+)
+
+ggplot(df_plot_5, aes(x = año, y = valor, color = serie, linetype = tipo_linea)) +
+  annotate("rect", xmin = 2019.5, xmax = 2021.5, ymin = -Inf, ymax = Inf,
+           fill = "grey92", alpha = 0.8) +
+  geom_line(linewidth = 0.8) +
+  facet_wrap(~ causa, scales = "free_y", ncol = 2) +
+  scale_color_manual(values = colores_serie) +
+  scale_linetype_manual(values = c("Observado" = "solid", "Esperado" = "dashed")) +
+  scale_x_continuous(breaks = seq(2005, 2024, 5)) +
+  scale_y_continuous(labels = scales::label_comma(big.mark = " ")) +
+  labs(
+    x = NULL, y = "Número anual de defunciones",
+    color = "Serie:", linetype = "Comportamiento:"
+  ) +
+  theme_minimal(base_size = 9) +
+  theme(
+    legend.position = "bottom",
+    panel.grid.minor = element_blank(),
+    strip.text = element_text(face = "bold", size = 9)
+  )
+```
+
+Al evaluar el comportamiento de las series en el periodo 2020–2024 se identifican tres dinámicas diferenciadas entre causas:
+
+1. **Desplazamiento estructural en enfermedades respiratorias:** Tanto en hombres como en mujeres, las muertes por patologías respiratorias experimentaron un desplome abrupto en 2020 y permanecieron sistemáticamente por debajo de su proyección histórica durante todo el trienio post-pandemia. Para 2024, las defunciones masculinas alcanzaron 1 127 casos (frente a más de 1 450 proyectados) y las femeninas 872 (frente a más de 1 300 esperados). Este descenso persistente responde al efecto de desplazamiento de mortalidad (*harvesting effect*), según el cual las olas agudas de COVID-19 en 2020 y 2021 precipitaron el deceso de la población más frágil con afecciones pulmonares preexistentes, disminuyendo temporalmente el grupo vulnerable en los años subsecuentes.
+2. **Exceso de mortalidad y sobremortalidad masculina en causas externas:** Las causas externas presentan la brecha por sexo más acentuada de toda la serie. Mientras la curva femenina conservó niveles reducidos y cercanos a lo proyectado (~600 a 700 casos anuales), en los hombres se produjo un repunte pronunciado tras el confinamiento de 2020, pasando de 1 977 muertes a 2 764 en 2024. Este volumen superó en más de 400 defunciones a la proyección histórica pre-pandemia, como consecuencia del incremento nacional en las tasas de violencia, homicidios y siniestralidad vial en población joven.
+3. **Persistencia e incremento en patologías crónicas:** El cáncer exhibe una trayectoria prácticamente inalterada respecto a su proyección log-lineal en ambos sexos, confirmando que la mortalidad por neoplasias responde principalmente a la inercia del envejecimiento de la estructura por edades. Por el contrario, las enfermedades circulatorias repuntaron fuertemente a partir de 2022, distanciándose al alza de la tendencia esperada (superando las 4 500 muertes en hombres y 3 800 en mujeres en 2024). Este exceso posterior a la pandemia se asocia al deterioro de la salud cardiovascular por secuelas post-infecciosas y al retraso acumulado en el control preventivo ambulatorio durante la saturación hospitalaria.
+
 ## Conclusiones
 
 
