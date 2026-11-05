@@ -431,9 +431,22 @@ ggplot(df_plot_5, aes(x = año, y = valor, color = serie, linetype = tipo_linea)
     x = NULL, y = "Número anual de defunciones",
     color = "Serie:", linetype = "Comportamiento:"
   ) +
+    guides(
+    color    = guide_legend(order = 1, nrow = 2),
+    linetype = guide_legend(order = 2, nrow = 1)
+  ) +
+  guides(
+    color    = guide_legend(order = 1, nrow = 2),
+    linetype = guide_legend(order = 2, nrow = 1)
+  ) +
   theme_minimal(base_size = 9) +
   theme(
     legend.position = "bottom",
+    legend.box = "vertical",
+    legend.box.just = "left",
+    legend.text = element_text(size = 8),
+    legend.title = element_text(size = 8),
+    legend.key.width = unit(1.2, "cm"),
     panel.grid.minor = element_blank(),
     strip.text = element_text(face = "bold", size = 9)
   )
