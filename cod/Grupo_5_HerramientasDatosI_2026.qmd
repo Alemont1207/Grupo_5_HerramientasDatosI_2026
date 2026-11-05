@@ -250,6 +250,8 @@ ggplot(porcentaje_anual, aes(x = año.defuncion, y = porcentaje, group = causa))
 
 
 ```
+### Participación porcentual de las principales causas de muerte según sexo y causa
+
 La Figura @fig-causas-sexo permite examinar si la distribución nacional de las causas de muerte presenta diferencias entre hombres y mujeres. Aunque las enfermedades circulatorias y el cáncer mantienen las mayores participaciones en ambos grupos, las causas externas muestran una desigualdad persistente durante el período estudiado.
 
 En el año 2005, las causas externas representaron el 17,2 % de las defunciones masculinas, frente al 6,32 % de las femeninas. Esta diferencia se mantuvo en 2019, cuando sus participaciones fueron del 15,9 % y el 5,2 %, respectivamente. Según la Tabla @tbl-resultados, en 2024 las causas externas representaron el 16 % de las defunciones de hombres y el 5,67 % de las mujeres. Por tanto, su participación fue aproximadamente 2,8 veces mayor entre los hombres. La persistencia de esta diferencia indica que el contraste no corresponde únicamente a las variaciones observadas durante la pandemia.
@@ -363,7 +365,7 @@ knitr::kable(
 )
 ```
 
-## Comparación de defunciones observadas frente a la tendencia esperada
+### Comparación de defunciones observadas frente a la tendencia esperada
 
 A partir de los modelos de regresión log-lineal descritos en la metodología y estimados con la serie 2005–2019, se calcularon las defunciones anuales esperadas ($\widehat{D}_t$) para el quinquenio 2020–2024 en caso de haberse mantenido las condiciones pre-pandemia. La @fig-observado-esperado contrasta esta trayectoria esperada con las defunciones efectivamente inscritas ante el INEC, diferenciando por sexo para las cinco causas de defunción. En la gráfica, las líneas continuas corresponden a las observaciones reales (azul en hombres y rosado en mujeres), las líneas punteadas representan la proyección de la tendencia histórica (anaranjado en hombres y morado en mujeres) y la franja vertical sombreada delimita el periodo pandémico (2020–2021).
 
@@ -373,8 +375,6 @@ A partir de los modelos de regresión log-lineal descritos en la metodología y 
 #| fig-width: 6.8
 #| fig-height: 5.2
 
-series_anuales <- readRDS("../data/series_anuales.rds")
-comparacion    <- readRDS("../data/comparacion.rds")
 
 causas_5 <- c("Circulatorias", "Cáncer", "Externas", "Respiratorias", "Infecciosas")
 
