@@ -1,2 +1,5 @@
-tidyverse
-haven
+# Paquetes necesarios para renderizar el informe.
+# Instalar con: install.packages(c("tidyverse", "haven"))
+
+tidyverse   # limpieza, cálculos y gráficos
+haven       # lectura de la base .sav del INEC
