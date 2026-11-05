@@ -72,22 +72,14 @@ execute:
 
 # Paquetes y datos -------------------------------------------------------
 library(tidyverse)
-library(haven)
 
-# Base original del INEC
-defunciones <- read_sav("../data/Defunciones 2005-2024.sav",
-                        col_select = c(anodef, mesdef, sexo, edads,
-                                       causamuer, grgruposcb)) |>
-  rename(año.defuncion = anodef,
-         mes.defuncion = mesdef,
-         edad          = edads,
-         causa.muerte  = causamuer,
-         gran.grupo    = grgruposcb)
-
-# Base limpia generada por cod/limpieza.R
+# Base limpia generada por cod/00_limpieza_datos.R
 defunciones_limpio <- readRDS("../data/defunciones_limpio.rds")
 
-# Resultados generados por cod/metodologia.R
+# Conteos descriptivos generados por cod/00_limpieza_datos.R
+conteo_crudo <- readRDS("../data/conteo_crudo.rds")
+
+# Resultados generados por cod/01_metodologia.R
 resumen_despues <- readRDS("../data/resumen_despues.rds")
 
 # Funciones auxiliares ----------------------------------------------------
@@ -97,21 +89,14 @@ miles <- function(x) format(x, big.mark = " ", scientific = FALSE)
 # pct(): número con un decimal y coma decimal (12,5)
 pct <- function(x) format(x, nsmall = 1, decimal.mark = ",", trim = TRUE)
 
-# valor(): saca un resultado de resumen_despues para una causa y sexo
-valor <- function(causa_, sexo_, columna) {
-  resumen_despues[[columna]][resumen_despues$causa == causa_ &
-                             resumen_despues$sexo  == sexo_]
-}
-
 # Datos para el texto -----------------------------------------------------
-n_total    <- nrow(defunciones)
-n_antes    <- sum(defunciones$año.defuncion < 2005)
-n_periodo  <- sum(between(defunciones$año.defuncion, 2005, 2024))
-n_edad_999 <- sum(zap_labels(defunciones$edad) == 999 &
-                  between(defunciones$año.defuncion, 2005, 2024))
-n_hombres  <- sum(zap_labels(defunciones$sexo) == 1)
-n_mujeres  <- sum(zap_labels(defunciones$sexo) == 2)
-n_covid    <- sum(str_detect(defunciones$causa.muerte, "^U0[79]"))
+n_total    <- conteo_crudo$n_total
+n_antes    <- conteo_crudo$n_antes
+n_periodo  <- conteo_crudo$n_periodo
+n_edad_999 <- conteo_crudo$n_edad_999
+n_hombres  <- conteo_crudo$n_hombres
+n_mujeres  <- conteo_crudo$n_mujeres
+n_covid    <- conteo_crudo$n_covid
 
 n_limpio   <- nrow(defunciones_limpio)
 pct_65     <- round(100 * mean(defunciones_limpio$grupo.edad == "65 o más",
