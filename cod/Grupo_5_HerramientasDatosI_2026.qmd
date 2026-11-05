@@ -83,6 +83,7 @@ conteo_crudo <- readRDS("../data/conteo_crudo.rds")
 resumen_despues <- readRDS("../data/resumen_despues.rds")
 
 series_anuales <- readRDS("../data/series_anuales.rds")
+comparacion    <- readRDS("../data/comparacion.rds")
 
 
 # Funciones auxiliares ----------------------------------------------------
