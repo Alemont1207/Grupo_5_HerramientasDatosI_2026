@@ -10,18 +10,31 @@ Análisis de la evolución de las cinco grandes causas de muerte en Costa Rica (
 
 | Carpeta | Contenido |
 |---|---|
-| `cod/` | Informe en Quarto, con la carga, limpieza y análisis de los datos |
-| `data/` | Base de defunciones del INEC (2005–2024) |
+| `cod/` | Scripts de limpieza y metodología, y el informe en Quarto |
+| `data/` | Base de defunciones del INEC (2005–2024) y bases generadas por los scripts |
 | `info/` | Documentos de apoyo (enunciado, rúbrica, artículos) |
 | `config/` | Lista de paquetes del proyecto |
 | `res/` | Informe final en PDF |
 
 ## Cómo reproducirlo
 
+Los archivos se corren en este orden:
+
+1. `cod/00_limpieza_datos.R`: lee `data/Defunciones 2005-2024.sav`, limpia los datos y genera `data/defunciones_limpio.rds` y `data/conteo_crudo.rds`.
+2. `cod/01_metodologia.R`: estima las tendencias, compara lo observado con lo esperado y genera en `data/` los resultados que usa el informe.
+3. `cod/Grupo_5_HerramientasDatosI_2026.qmd`: genera el informe en PDF.
+
+Pasos:
+
 1. Abrir `Grupo_5_HerramientasDatosI_2026.Rproj` en RStudio.
-2. Instalar los paquetes de `config/paquetes.txt`: `install.packages(c("tidyverse", "haven"))`.
-3. Renderizar el informe desde la terminal de RStudio:
-   `quarto render cod/Grupo_5_HerramientasDatosI_2026.qmd && mv cod/Grupo_5_HerramientasDatosI_2026.pdf res/`
+2. Instalar los paquetes de `config/paquetes.txt`: `install.packages(c("tidyverse", "haven", "kableExtra"))`.
+3. Desde la terminal de RStudio, correr:
+
+```
+Rscript cod/00_limpieza_datos.R
+Rscript cod/01_metodologia.R
+quarto render cod/Grupo_5_HerramientasDatosI_2026.qmd && mv cod/Grupo_5_HerramientasDatosI_2026.pdf res/
+```
 
 ## Fuente de datos
 
