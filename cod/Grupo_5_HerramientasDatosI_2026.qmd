@@ -334,7 +334,7 @@ ggplot(porcentaje_sexo,
 causas_tabla <- c("Circulatorias", "Cáncer", "Externas",
                   "Infecciosas", "Respiratorias")
 
-defunciones_limpio |>
+tabla <- defunciones_limpio |>
   mutate(
     grupo = case_when(
       sexo == "F" ~ "Mujeres",
@@ -364,6 +364,18 @@ defunciones_limpio |>
   mutate(
     across(c(`2005`, `2019`, `2021`, `2024`),
            ~ round(.x, 2)))
+
+knitr::kable(
+  tabla,
+  format = "pipe",
+  col.names = c(
+    "Grupo", "Causa de muerte",
+    "2005", "2019", "2021", "2024"
+  ),
+  align = c("l", "l", "r", "r", "r", "r"),
+  digits = 2,
+  caption = NULL
+)
 ```
 
 ## Comparación de defunciones observadas frente a la tendencia esperada
