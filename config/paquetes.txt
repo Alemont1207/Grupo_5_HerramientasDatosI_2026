@@ -1,5 +1,6 @@
 # Paquetes necesarios para renderizar el informe.
-# Instalar con: install.packages(c("tidyverse", "haven"))
+# Instalar con: install.packages(c("tidyverse", "haven", "kableExtra"))
 
-tidyverse   # limpieza, cálculos y gráficos
-haven       # lectura de la base .sav del INEC
+tidyverse    # limpieza, cálculos y gráficos
+haven        # lectura de la base .sav del INEC
+kableExtra   # encabezados agrupados en la tabla de tendencias
