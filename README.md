@@ -6,6 +6,7 @@ Proyecto grupal del curso CA-0204 Herramientas de Ciencia de Datos I (UCR, II-20
 **Grupo 5:** Alessia Aguilar Badilla, Alonso José Alpízar Brenes, Mariano Morales Carvajal, Derek Escobar Jaramillo y Deilany Fuentes Barquero.
 
 Análisis de la evolución de las cinco grandes causas de muerte en Costa Rica (infecciosas, cáncer, circulatorias, respiratorias y externas) entre 2005 y 2024, a partir del Registro de Defunciones del INEC.
+
 ## Estructura
 
 | Carpeta | Contenido |
@@ -20,8 +21,8 @@ Análisis de la evolución de las cinco grandes causas de muerte en Costa Rica (
 
 Los scripts se corren en este orden:
 
-1. `cod/limpieza.R`: lee `data/Defunciones 2005-2024.sav` y genera `data/defunciones_limpio.rds`.
-2. `cod/metodologia.R`: lee `data/defunciones_limpio.rds` y genera los resultados del análisis.
+1. `cod/00_limpieza_datos.R`: lee `data/Defunciones 2005-2024.sav` y genera `data/defunciones_limpio.rds`.
+2. `cod/01_metodologia.R`: lee `data/defunciones_limpio.rds` y genera los resultados del análisis.
 3. `cod/Grupo_5_HerramientasDatosI_2026.qmd`: lee esos resultados y genera `res/Grupo_5_HerramientasDatosI_2026.pdf`.
 
 Pasos:
