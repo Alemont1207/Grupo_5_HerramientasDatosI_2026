@@ -71,7 +71,17 @@ execute:
 
 # Paquetes -----------------------------------------------------------------
 library(tidyverse)
-library(haven)  # lectura de archivos .sav (SPSS)
+
+# Datos generados por cod/00_limpieza_datos.R ------------------------------
+conteo_crudo <- readRDS("../data/conteo_crudo.rds")
+
+# Resultados generados por cod/01_metodologia.R ----------------------------
+clasificacion_causas <- readRDS("../data/clasificacion_causas.rds")
+porcentaje_anual     <- readRDS("../data/porcentaje_anual.rds")
+porcentaje_sexo      <- readRDS("../data/porcentaje_sexo.rds")
+participacion        <- readRDS("../data/participacion.rds")
+observado_esperado   <- readRDS("../data/observado_esperado.rds")
+tabla_tendencias     <- readRDS("../data/tabla_tendencias.rds")
 
 # Funciones auxiliares -----------------------------------------------------
 # miles(): número con espacio como separador de miles (444 371)
@@ -79,165 +89,17 @@ miles <- function(x) format(x, big.mark = " ", scientific = FALSE)
 
 # pct(): número con un decimal y coma decimal (12,5)
 pct <- function(x) format(x, nsmall = 1, decimal.mark = ",", trim = TRUE)
-```
 
-```{r}
-#| label: carga-limpieza
-
-# Carga de datos -----------------------------------------------------------
-# Base consolidada del INEC (444 371 registros). Solo se cargan las
-# variables que se usan en el análisis.
-defunciones <- read_sav("../data/Defunciones 2005-2024.sav",
-                        col_select = c(anodef, mesdef, sexo, edads,
-                                       causamuer, grgruposcb)) |>
-  rename(año.defuncion = anodef,      # año de la defunción
-         mes.defuncion = mesdef,      # mes de la defunción (1 a 12)
-         edad          = edads,       # edad en años cumplidos
-         causa.muerte  = causamuer,   # código CIE-10 de la causa básica
-         gran.grupo    = grgruposcb)  # gran grupo de causa del INEC (17)
-
-# Revisión de los datos ----------------------------------------------------
-# Conteos de la base original que se citan en la sección de Datos
-n_total    <- nrow(defunciones)
-n_antes    <- sum(defunciones$año.defuncion < 2005)
-n_periodo  <- sum(between(defunciones$año.defuncion, 2005, 2024))
-n_edad_999 <- sum(zap_labels(defunciones$edad) == 999 &
-                  between(defunciones$año.defuncion, 2005, 2024))
-n_hombres  <- sum(zap_labels(defunciones$sexo) == 1)
-n_mujeres  <- sum(zap_labels(defunciones$sexo) == 2)
-n_covid    <- sum(str_detect(defunciones$causa.muerte, "^U0[79]"))
-
-# Limpieza -----------------------------------------------------------------
-# 1. Se quitan las etiquetas de SPSS y se conservan los años completos
-#    (2005–2024).
-# 2. Sexo con letras: "M" (hombre) y "F" (mujer).
-# 3. La edad ignorada (999) pasa a NA.
-# 4. Cada defunción se clasifica en cinco grandes causas. El COVID-19
-#    (códigos U07 y U09) se separa de las infecciosas y el resto de los
-#    grupos del INEC se junta en "Otras".
-# 5. Grupo de edad: "Menos de 65" y "65 o más".
-# 6. Periodo respecto a la pandemia: antes, pandemia y después.
-# 7. Fecha del mes de la defunción.
-defunciones_limpio <- defunciones |>
-  mutate(across(everything(), zap_labels)) |>
-  filter(between(año.defuncion, 2005, 2024)) |>
-  mutate(sexo  = case_when(sexo == 1 ~ "M",
-                           sexo == 2 ~ "F",
-                           .default  = "Sin dato"),
-         edad  = na_if(edad, 999),
-         causa = case_when(
-           str_detect(causa.muerte, "^U0[79]") ~ "COVID-19",
-           gran.grupo == 1  ~ "Infecciosas",
-           gran.grupo == 2  ~ "Cáncer",
-           gran.grupo == 7  ~ "Circulatorias",
-           gran.grupo == 8  ~ "Respiratorias",
-           gran.grupo == 17 ~ "Externas",
-           .default         = "Otras"),
-         grupo.edad = case_when(edad < 65  ~ "Menos de 65",
-                                edad >= 65 ~ "65 o más"),
-         periodo = case_when(año.defuncion <= 2019 ~ "Antes",
-                             año.defuncion <= 2021 ~ "Pandemia",
-                             .default              = "Después"),
-         fecha = make_date(año.defuncion, mes.defuncion, 1))
-
-n_limpio <- nrow(defunciones_limpio)
-pct_65   <- round(100 * mean(defunciones_limpio$grupo.edad == "65 o más",
-                             na.rm = TRUE), 1)
-```
-
-```{r}
-#| label: metodologia
-
-# Series anuales -----------------------------------------------------------
-# Defunciones por año y sexo de las cinco grandes causas y del total de
-# defunciones (todas las causas), que sirve de referencia.
-causas_5 <- c("Circulatorias", "Cáncer", "Externas",
-              "Respiratorias", "Infecciosas")
-
-series_anuales <- bind_rows(
-  defunciones_limpio |>
-    filter(causa %in% causas_5) |>
-    count(año = año.defuncion, sexo, causa, name = "defunciones"),
-  defunciones_limpio |>
-    count(año = año.defuncion, sexo, name = "defunciones") |>
-    mutate(causa = "Total")
-)
-
-# Tendencia antes de la pandemia -------------------------------------------
-# Para cada causa y sexo se ajusta una recta al logaritmo de las
-# defunciones de 2005 a 2019. La pendiente se convierte en el cambio
-# porcentual promedio por año.
-tendencias <- series_anuales |>
-  filter(año <= 2019) |>
-  summarise(intercepto = coef(lm(log(defunciones) ~ año))[1],
-            pendiente  = coef(lm(log(defunciones) ~ año))[2],
-            .by = c(sexo, causa)) |>
-  mutate(cambio_anual = round(100 * (exp(pendiente) - 1), 1))
-
-# Observado contra esperado ------------------------------------------------
-# Defunciones esperadas de 2020 a 2024 según la tendencia de 2005–2019 y
-# diferencia porcentual con las observadas.
-comparacion <- series_anuales |>
-  filter(año >= 2020) |>
-  left_join(tendencias, by = c("sexo", "causa")) |>
-  mutate(esperado   = exp(intercepto + pendiente * año),
-         diferencia = round(100 * (defunciones / esperado - 1), 1)) |>
-  select(año, sexo, causa, defunciones, esperado, diferencia)
-
-# Datos para los gráficos y tablas -----------------------------------------
-
-# Porcentaje de las defunciones de cada año por causa (ambos sexos).
-# Se calcula sobre el total del año, incluyendo COVID-19 y "Otras".
-porcentaje_anual <- defunciones_limpio |>
-  count(año.defuncion, causa, name = "defunciones") |>
-  mutate(porcentaje = defunciones / sum(defunciones),
-         .by = año.defuncion) |>
-  filter(causa %in% causas_5)
-
-# Porcentaje de las defunciones de cada año por causa y sexo
-porcentaje_sexo <- defunciones_limpio |>
-  count(año.defuncion, sexo, causa, name = "defunciones") |>
-  mutate(porcentaje = defunciones / sum(defunciones),
-         .by = c(año.defuncion, sexo)) |>
-  filter(causa %in% causas_5) |>
-  mutate(sexo = if_else(sexo == "F", "Mujeres", "Hombres"),
-         sexo = factor(sexo, levels = c("Mujeres", "Hombres")))
-
-# Participación (%) de cada causa en el total, mujeres y hombres para
-# 2005, 2019, 2021 y 2024
-participacion <- defunciones_limpio |>
-  mutate(grupo = if_else(sexo == "F", "Mujeres", "Hombres")) |>
-  bind_rows(defunciones_limpio |> mutate(grupo = "Total")) |>
-  count(grupo, año.defuncion, causa, name = "defunciones") |>
-  mutate(porcentaje = 100 * defunciones / sum(defunciones),
-         .by = c(grupo, año.defuncion)) |>
-  filter(año.defuncion %in% c(2005, 2019, 2021, 2024),
-         causa %in% causas_5) |>
-  select(grupo, causa, año.defuncion, porcentaje) |>
-  pivot_wider(names_from = año.defuncion, values_from = porcentaje) |>
-  mutate(grupo = factor(grupo, levels = c("Total", "Mujeres", "Hombres")),
-         causa = factor(causa, levels = causas_5)) |>
-  arrange(grupo, causa)
-
-# Defunciones observadas (2005–2024) y esperadas (2020–2024) por causa y
-# sexo. El valor observado de 2019 se repite como inicio de la línea
-# esperada para que ambas líneas queden unidas en el gráfico.
-observado_esperado <- bind_rows(
-  series_anuales |>
-    filter(causa %in% causas_5) |>
-    transmute(año, sexo, causa, valor = defunciones, tipo = "Observado"),
-  series_anuales |>
-    filter(causa %in% causas_5, año == 2019) |>
-    transmute(año, sexo, causa, valor = defunciones, tipo = "Esperado"),
-  comparacion |>
-    filter(causa %in% causas_5) |>
-    transmute(año, sexo, causa, valor = esperado, tipo = "Esperado")
-) |>
-  mutate(sexo  = if_else(sexo == "F", "Mujeres", "Hombres"),
-         serie = factor(paste(sexo, "-", tipo),
-                        levels = c("Hombres - Observado", "Hombres - Esperado",
-                                   "Mujeres - Observado", "Mujeres - Esperado")),
-         causa = factor(causa, levels = causas_5))
+# Datos para el texto ------------------------------------------------------
+n_total    <- conteo_crudo$n_total
+n_antes    <- conteo_crudo$n_antes
+n_periodo  <- conteo_crudo$n_periodo
+n_edad_999 <- conteo_crudo$n_edad_999
+n_hombres  <- conteo_crudo$n_hombres
+n_mujeres  <- conteo_crudo$n_mujeres
+n_covid    <- conteo_crudo$n_covid
+n_limpio   <- conteo_crudo$n_limpio
+pct_65     <- conteo_crudo$pct_65
 ```
 
 # Introducción
@@ -250,7 +112,8 @@ Para el análisis se utiliza el Registro de Defunciones del Instituto Nacional d
 
 # Objetivo general
 
-Identificar qué causas de muerte ganaron o perdieron importancia en Costa Rica entre 2005 y 2024, según sexo, mediante la estimación de la tendencia de cada una de las cinco grandes causas. 
+Identificar qué causas de muerte ganaron o perdieron importancia en Costa Rica entre 2005 y 2024, según sexo, mediante la estimación de la tendencia de cada una de las cinco grandes causas.
+
 # Metodología
 
 ## Datos
@@ -296,9 +159,8 @@ grupos_inec <- tribble(
   "Otras",         "Los 12 grupos restantes"
 )
 
-defunciones_limpio |>
-  count(causa) |>
-  mutate(porcentaje = pct(round(100 * n / sum(n), 1)),
+clasificacion_causas |>
+  mutate(porcentaje = pct(round(porcentaje, 1)),
          n          = miles(n)) |>
   left_join(grupos_inec, by = "causa") |>
   arrange(match(causa, grupos_inec$causa)) |>
@@ -496,8 +358,34 @@ Al comparar lo que realmente ocurrió frente a las tendencias proyectadas para 2
    Después de 2021 se observa una ruptura en casi todas las tendencias que el país mantenía desde 2005. Por un lado, las enfermedades circulatorias crecieron por encima de lo esperado en ambos sexos a partir de 2022, y en 2024 superaron las 4 500 muertes en hombres y las 3 800 en mujeres. Por otro lado, las causas externas reflejan la brecha más marcada entre sexos: mientras las mujeres se mantuvieron en niveles bajos y estables durante todo el periodo (alrededor de 600 a 700 casos al año), los hombres pasaron de 1 977 muertes en 2020 a 2 764 en 2024, por encima de la tendencia previa.
    En contraste, el cáncer fue la causa con el comportamiento más predecible: las defunciones observadas siguieron prácticamente la tendencia estimada en ambos sexos, lo que posiblemente se relaciona con el envejecimiento gradual de la población.
 
-## Conclusiones
+\newpage
 
+### Tendencia previa y desviación posterior a la pandemia
+
+```{r}
+#| label: tbl-tendencias
+#| tbl-cap: "Cambio anual promedio 2005–2019 (%), diferencia con el cambio anual del total (puntos porcentuales) y diferencia entre defunciones observadas y esperadas en 2022–2024 (%), según causa y sexo. Costa Rica. Fuente: elaboración propia con datos del INEC (2025)."
+
+tabla_tendencias |>
+  mutate(across(-causa, \(x) pct(round(x, 1)))) |>
+  knitr::kable(col.names = c("Causa", rep(c("Mujeres", "Hombres"), 3)),
+               align = c("l", rep("r", 6))) |>
+  kableExtra::add_header_above(c(" " = 1, "Cambio anual" = 2,
+                                 "Frente al total" = 2,
+                                 "Observado vs. esperado" = 2))
+```
+
+La @tbl-tendencias resume, para cada causa y sexo, el cambio anual promedio estimado con la serie 2005–2019 y la diferencia entre las defunciones observadas y esperadas en 2022–2024, una vez superada la fase crítica de la pandemia. Antes de 2020, una causa ganaba peso si su cambio anual superaba el del total de defunciones.
+
+Antes de la pandemia, solo las respiratorias ganaban peso: crecían 4,2 % anual en mujeres y 3,6 % en hombres, es decir, 1,1 y 0,8 puntos porcentuales por encima del total. El cáncer crecía al mismo ritmo que el total (3,1 % y 2,8 %), por lo que su peso era estable, mientras que las circulatorias, las externas y las infecciosas lo perdían.
+
+Después de 2021 el patrón se invirtió. Las respiratorias quedaron 30,5 % (mujeres) y 23,1 % (hombres) por debajo de lo esperado, mientras que las circulatorias y las externas lo superaron (17,7 % y 10,1 % en mujeres; 12,2 % y 10,8 % en hombres), incluso por encima de la desviación del total (8,0 % y 9,1 %). El cáncer se mantuvo cerca de su tendencia (−3,2 % y −3,3 %). Es decir, la única causa que ganaba peso antes de la pandemia fue la que más lo perdió, mientras que las circulatorias y las externas, que lo perdían, lo recuperaron.
+
+Estos resultados deben leerse con cuidado. Los porcentajes describen la distribución de las defunciones dentro de cada sexo y no son tasas de mortalidad. Además, las tendencias se estimaron solo con el año como variable, sin considerar la estructura por edades ni el tamaño de la población, y 2024 podría estar levemente incompleto. Por ello, las diferencias entre lo observado y lo esperado no pueden atribuirse exclusivamente a la pandemia.
+
+\newpage
+
+## Conclusiones
 
 \newpage
 
