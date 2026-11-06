@@ -386,6 +386,15 @@ Estos resultados deben leerse con cuidado. Los porcentajes describen la distribu
 \newpage
 
 ## Conclusiones
+El objetivo era identificar qué causas de muerte ganaron o perdieron importancia en Costa Rica entre 2005 y 2024, según sexo. Los resultados muestran que la composición de las defunciones cambió, y que esos cambios no fueron iguales en todas las causas. 
+
+Las enfermedades circulatorias perdieron participación antes de la pandemia (del 29,2% en 2005 al 25,6% en 2019), pero en 2024 la recuperaron (27,9 %) y sus defunciones superaron lo esperado según la tendencia previa, en ambos sexos. El cáncer mantuvo una participación estable (22,6 % y 22,7%) y sus defunciones siguieron su tendencia esperada, por lo que su menor participación en 2024 (21,0%) responde al aumento de otras causas y no a un cambio propio. Las enfermedades respiratorias fueron la única causa que ganaba peso antes de la pandemia (crecían 4,2% anual en mujeres y 3,6% en hombres, por encima del total), pero fueron la principal pérdida después: pasaron del 9,2 % en 2019 al 6,7% en 2024, y en 2024 se registraron 1 127 muertes en hombres frente a más de 1 450 esperadas, y 872 en mujeres frente a más de 1 300. Las causas externas recuperaron su participación previa a la pandemia.
+
+Por sexo, la diferencia más marcada se da en las causas externas, que en 2024 representaron el 16,0 % de las defunciones masculinas y el 5,7% de las femeninas, cerca de 2,8 veces más. Los hombres pasaron de 1 977 muertes por esta causa en 2020 a 2 764 en 2024, mientras que las mujeres se mantuvieron entre 600 y 700 casos al año. Las circulatorias y el cáncer pesan más entre las mujeres.
+
+Estos hallazgos tienen implicaciones para la salud pública y para el análisis actuarial. Que las circulatorias y las causas externas en hombres superen su tendencia previa señala dónde conviene concentrar la vigilancia. Que las respiratorias queden por debajo de lo esperado no debe leerse como una mejora en la supervivencia, porque los datos no permiten identificar sus causas. Para fines actuariales, los patrones de mortalidad deben evaluarse con tasas y no solo con participaciones.
+
+El análisis tiene limitaciones. Los porcentajes describen la composición de las defunciones y no la mortalidad de la población; el modelo no controla por edad ni por tamaño poblacional, pese al envejecimiento descrito en la introducción; 2024 podría estar incompleto; y la categoría «Otras» (26,5% de las defunciones) no se analizó. Como trabajo futuro, se recomienda estimar tasas estandarizadas por edad y analizar las diferencias entre los grupos de menos de 65 años y de 65 años o más.
 
 \newpage
 
