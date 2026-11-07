@@ -52,8 +52,6 @@ format:
           \vspace{0.7em}
           {\small Alessia Aguilar Badilla · Alonso José Alpízar Brenes · Mariano Morales Carvajal\par
            Derek Escobar Jaramillo · Deilany Fuentes Barquero\par}
-          \vspace{0.3em}
-          {\small\href{https://github.com/Alemont1207/Grupo_5_HerramientasDatosI_2026}{github.com/Alemont1207/Grupo\_5\_HerramientasDatosI\_2026}\par}
           \end{center}
           \vspace{-0.4em}
           {\color{azul}\noindent\rule{\linewidth}{0.8pt}}\par
@@ -139,7 +137,7 @@ Por último, el COVID-19 se registra con varios códigos de la CIE-10 (U07.1, U0
 
 ## Limpieza
 
-La limpieza se realizó en R (R Core Team, 2026) con los paquetes `tidyverse` (Wickham et al., 2019) y `haven`. Primero se conservaron las defunciones ocurridas entre 2005 y 2024, que suman `r miles(n_limpio)`. Luego se codificó el sexo con letras (M y F), la edad ignorada (999) se trató como dato faltante y se creó la fecha de cada defunción a partir de su año y mes.
+La limpieza se realizó en R (R Core Team, 2026) con los paquetes `tidyverse` (Wickham et al., 2019) y `haven`. Primero se conservaron las defunciones ocurridas entre 2005 y 2024, que suman `r miles(n_periodo)`. Luego se codificó el sexo con letras (M y F), la edad ignorada (999) se trató como dato faltante y se creó la fecha de cada defunción a partir de su año y mes.
 
 Cada defunción se clasificó en cinco grandes causas de muerte: enfermedades infecciosas y parasitarias, cáncer, enfermedades del sistema circulatorio, enfermedades del sistema respiratorio y causas externas, a partir de los grandes grupos de causa del INEC (@tbl-causas). El COVID-19 se separó del grupo de infecciosas, al que el INEC lo asigna, ya que de lo contrario el aumento de 2020 y 2021 se interpretaría como un cambio en esa causa. Los grupos restantes se reunieron en la categoría "Otras".
 
@@ -413,3 +411,12 @@ Organización Panamericana de la Salud [OPS]. (2024). *Perfil de país: Costa Ri
 R Core Team. (2026). *R: A language and environment for statistical computing* (Versión 4.6.1) \[Software\]. R Foundation for Statistical Computing. <https://www.R-project.org/>
 
 Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L. D., François, R., Grolemund, G., Hayes, A., Henry, L., Hester, J., Kuhn, M., Pedersen, T. L., Miller, E., Bache, S. M., Müller, K., Ooms, J., Robinson, D., Seidel, D. P., Spinu, V., … Yutani, H. (2019). Welcome to the tidyverse. *Journal of Open Source Software, 4*(43), 1686. <https://doi.org/10.21105/joss.01686>
+
+\newpage
+
+# Anexos {.unnumbered}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.8em}
+
+Repositorio del proyecto: <https://github.com/Alemont1207/Grupo_5_HerramientasDatosI_2026>
