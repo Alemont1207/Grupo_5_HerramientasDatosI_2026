@@ -4,14 +4,14 @@ Proyecto grupal del curso CA-0204 Herramientas de Ciencia de Datos I (UCR, II-20
 
 **Grupo 5:** Alessia Aguilar Badilla, Alonso José Alpízar Brenes, Mariano Morales Carvajal, Derek Escobar Jaramillo y Deilany Fuentes Barquero.
 
-Análisis de la evolución de las cinco grandes causas de muerte en Costa Rica (infecciosas, cáncer, circulatorias, respiratorias y externas) entre 2005 y 2024, a partir del Registro de Defunciones del INEC. Se estima la tendencia de cada causa entre 2005 y 2019 y se compara con las defunciones observadas entre 2020 y 2024.
+Análisis de la evolución de las cinco grandes causas de muerte en Costa Rica (infecciosas, cáncer, circulatorias, respiratorias y externas) entre 2005 y 2024, a partir del Registro de Defunciones del INEC. Con la población del INEC se calculan tasas de mortalidad estandarizadas por edad; se estima la tendencia de cada causa entre 2005 y 2019 y se compara con las tasas observadas entre 2020 y 2024.
 
 ## Estructura
 
 | Carpeta | Contenido |
 |---|---|
 | `cod/` | Scripts de limpieza y metodología, y el informe en Quarto |
-| `data/` | Base de defunciones del INEC (2005–2024) y bases generadas por los scripts |
+| `data/` | Base de defunciones del INEC (2005–2024), población del INEC (`poblacion_inec.csv`) y bases generadas por los scripts |
 | `info/` | Documentos de apoyo (enunciado, rúbrica, artículos) |
 | `config/` | Lista de paquetes del proyecto |
 | `res/` | Informe final en PDF |
@@ -21,7 +21,7 @@ Análisis de la evolución de las cinco grandes causas de muerte en Costa Rica (
 Los archivos se corren en este orden:
 
 1. `cod/00_limpieza_datos.R`: lee `data/Defunciones 2005-2024.sav`, limpia los datos y genera `data/defunciones_limpio.rds` y `data/conteo_crudo.rds`.
-2. `cod/01_metodologia.R`: estima las tendencias, compara lo observado con lo esperado y genera en `data/` los resultados que usa el informe.
+2. `cod/01_metodologia.R`: con `data/poblacion_inec.csv` calcula las tasas estandarizadas por edad, estima las tendencias, compara lo observado con lo esperado y genera en `data/` los resultados que usa el informe.
 3. `cod/Grupo_5_HerramientasDatosI_2026.qmd`: genera el informe en PDF.
 
 Pasos:
@@ -39,3 +39,5 @@ quarto render cod/Grupo_5_HerramientasDatosI_2026.qmd && mv cod/Grupo_5_Herramie
 ## Fuente de datos
 
 Instituto Nacional de Estadística y Censos [INEC]. (2025). *Registro de Defunciones (REGDEF): Estadísticas Vitales de Costa Rica* [Conjunto de datos]. https://sistemas.inec.cr/nada5.4/index.php/catalog/REGDEF/
+
+Instituto Nacional de Estadística y Censos [INEC]. (2024). *Estimaciones y proyecciones nacionales de población 1950–2100* [Conjunto de datos]. https://admin.inec.cr/sites/default/files/2025-10/repoblaceppnacio1950-2100..xlsx (cuadro 2, población por sexo y grupos de edad, 2005–2024).
