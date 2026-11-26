@@ -80,6 +80,7 @@ porcentaje_sexo      <- readRDS("../data/porcentaje_sexo.rds")
 participacion        <- readRDS("../data/participacion.rds")
 observado_esperado   <- readRDS("../data/observado_esperado.rds")
 tabla_tendencias     <- readRDS("../data/tabla_tendencias.rds")
+comparacion          <- readRDS("../data/comparacion.rds")
 edad_periodo         <- readRDS("../data/edad_periodo.rds")
 causas_edad          <- readRDS("../data/causas_edad.rds")
 
@@ -475,3 +476,31 @@ Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L. D., François, R., G
 \setlength{\parskip}{0.8em}
 
 Repositorio del proyecto: <https://github.com/Alemont1207/Grupo_5_HerramientasDatosI_2026>
+
+La @tbl-anexo-valores presenta los valores de la @fig-observado-esperado para 2020–2024: las defunciones observadas, las esperadas según la tendencia de 2005–2019 y la diferencia porcentual entre ambas, calculada como $100\,(D_t/\widehat{D}_t - 1)$.
+
+```{r}
+#| label: tbl-anexo-valores
+#| tbl-cap: "Defunciones observadas, esperadas según la tendencia 2005–2019 y diferencia porcentual, según causa, año y sexo. Costa Rica, 2020–2024. Fuente: elaboración propia con datos del INEC (2025)."
+
+comparacion |>
+  mutate(sexo       = if_else(sexo == "F", "Mujeres", "Hombres"),
+         causa      = factor(causa, levels = c("Circulatorias", "Cáncer", "Externas",
+                                               "Respiratorias", "Infecciosas", "Total")),
+         defunciones = miles(defunciones),
+         esperado    = miles(round(esperado)),
+         diferencia  = pct(diferencia)) |>
+  select(causa, año, sexo, defunciones, esperado, diferencia) |>
+  pivot_wider(names_from = sexo,
+              values_from = c(defunciones, esperado, diferencia)) |>
+  arrange(causa, año) |>
+  mutate(causa = if_else(duplicated(causa), "", as.character(causa))) |>
+  select(causa, año,
+         defunciones_Mujeres, esperado_Mujeres, diferencia_Mujeres,
+         defunciones_Hombres, esperado_Hombres, diferencia_Hombres) |>
+  knitr::kable(col.names = c("Causa", "Año",
+                             rep(c("Observadas", "Esperadas", "Dif. (%)"), 2)),
+               align = c("l", "l", rep("r", 6))) |>
+  kableExtra::add_header_above(c(" " = 2, "Mujeres" = 3, "Hombres" = 3)) |>
+  kableExtra::kable_styling(font_size = 9, latex_options = "hold_position")
+```
