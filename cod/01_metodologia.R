@@ -142,6 +142,39 @@ observado_esperado <- bind_rows(
                                    "Mujeres - Observado", "Mujeres - Esperado")),
          causa = factor(causa, levels = causas_5))
 
+# Grupos de edad -----------------------------------------------------------
+# Se usan los grupos de edad (menos de 65 y 65 o más) y los periodos
+# respecto a la pandemia creados en la limpieza. Se excluyen las
+# defunciones con edad ignorada.
+periodos <- c("Antes", "Pandemia", "Después")
+edad_conocida <- defunciones_limpio |>
+  filter(!is.na(grupo.edad))
+
+# Porcentaje de las defunciones de cada periodo que corresponde a cada
+# grupo de edad
+edad_periodo <- edad_conocida |>
+  count(periodo, grupo.edad, name = "defunciones") |>
+  mutate(porcentaje = 100 * defunciones / sum(defunciones),
+         .by = periodo) |>
+  mutate(periodo    = factor(periodo, levels = periodos),
+         grupo.edad = factor(grupo.edad, levels = c("Menos de 65", "65 o más"))) |>
+  arrange(periodo, grupo.edad)
+
+# Participación (%) de cada causa en las defunciones de cada grupo de edad
+# y periodo. El porcentaje se calcula sobre todas las defunciones del grupo,
+# incluyendo COVID-19 y "Otras".
+causas_edad <- edad_conocida |>
+  count(grupo.edad, periodo, causa, name = "defunciones") |>
+  mutate(porcentaje = 100 * defunciones / sum(defunciones),
+         .by = c(grupo.edad, periodo)) |>
+  filter(causa %in% causas_5) |>
+  select(grupo.edad, causa, periodo, porcentaje) |>
+  pivot_wider(names_from = periodo, values_from = porcentaje) |>
+  mutate(grupo.edad = factor(grupo.edad, levels = c("Menos de 65", "65 o más")),
+         causa      = factor(causa, levels = causas_5)) |>
+  arrange(grupo.edad, causa) |>
+  select(grupo.edad, causa, all_of(periodos))
+
 # Exportación --------------------------------------------------------------
 saveRDS(clasificacion_causas, "data/clasificacion_causas.rds")
 saveRDS(tendencias,           "data/tendencias.rds")
@@ -151,3 +184,5 @@ saveRDS(porcentaje_anual,     "data/porcentaje_anual.rds")
 saveRDS(porcentaje_sexo,      "data/porcentaje_sexo.rds")
 saveRDS(participacion,        "data/participacion.rds")
 saveRDS(observado_esperado,   "data/observado_esperado.rds")
+saveRDS(edad_periodo,         "data/edad_periodo.rds")
+saveRDS(causas_edad,          "data/causas_edad.rds")
