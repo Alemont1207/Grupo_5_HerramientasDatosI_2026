@@ -80,6 +80,8 @@ porcentaje_sexo      <- readRDS("../data/porcentaje_sexo.rds")
 participacion        <- readRDS("../data/participacion.rds")
 observado_esperado   <- readRDS("../data/observado_esperado.rds")
 tabla_tendencias     <- readRDS("../data/tabla_tendencias.rds")
+edad_periodo         <- readRDS("../data/edad_periodo.rds")
+causas_edad          <- readRDS("../data/causas_edad.rds")
 
 # Funciones auxiliares -----------------------------------------------------
 # miles(): número con espacio como separador de miles (444 371)
@@ -168,7 +170,7 @@ clasificacion_causas |>
                align = c("l", "l", "r", "r"))
 ```
 
-Por último, las defunciones se dividieron en dos grupos de edad (menos de 65 años y 65 años o más) y según el periodo respecto a la pandemia: antes (2005–2019), durante (2020–2021) y después (2022–2024). Las personas de 65 años o más concentran el `r pct(pct_65)` % de las defunciones del periodo.
+Por último, las defunciones se dividieron en dos grupos de edad (menos de 65 años y 65 años o más) y según el periodo respecto a la pandemia: antes (2005–2019), durante (2020–2021) y después (2022–2024). Las personas de 65 años o más concentran el `r pct(pct_65)` % de las defunciones del periodo. Estos grupos se usan para comparar la participación de cada causa dentro de cada grupo de edad antes, durante y después de la pandemia, y así distinguir los cambios propios de cada causa de los que se deben a que una mayor parte de las defunciones ocurre en personas mayores.
 
 ## Técnicas y herramientas
 
@@ -300,6 +302,43 @@ En 2005, las causas externas representaron el 17,2 % de las defunciones masculin
 
 Por otra parte, en 2024 las enfermedades circulatorias representaron el 29,6 % de las defunciones femeninas y el 26,6 % de las masculinas, mientras que el cáncer concentró el 22,7 % y el 19,7 %, respectivamente. Esto muestra que, aunque ambas categorías predominan en los dos grupos, tienen una participación relativa mayor entre las mujeres.
 
+### Participación de las principales causas de muerte según grupo de edad
+
+```{r}
+#| label: tbl-causas-edad
+#| tbl-cap: "Participación porcentual de las principales causas de muerte según grupo de edad y periodo respecto a la pandemia: antes (2005–2019), durante (2020–2021) y después (2022–2024). Costa Rica. Se excluyen las defunciones con edad ignorada. Fuente: elaboración propia con datos del INEC (2025)."
+
+# Porcentaje de defunciones de 65 años o más en cada periodo
+pct_65_periodo <- edad_periodo |>
+  filter(grupo.edad == "65 o más") |>
+  select(periodo, porcentaje) |>
+  deframe()
+
+# Participación de una causa en un grupo de edad y periodo (para el texto)
+part_edad <- function(grupo, causa_sel, periodo_sel) {
+  causas_edad |>
+    filter(grupo.edad == grupo, causa == causa_sel) |>
+    pull(all_of(periodo_sel)) |>
+    round(1) |>
+    pct()
+}
+
+causas_edad |>
+  mutate(across(c(Antes, Pandemia, Después), \(x) pct(round(x, 1))),
+         grupo.edad = as.character(grupo.edad)) |>
+  knitr::kable(col.names = c("Grupo de edad", "Causa de muerte",
+                             "Antes", "Pandemia", "Después"),
+               align = c("l", "l", "r", "r", "r"))
+```
+
+Como la edad influye en la causa de muerte, un cambio en la edad de las personas fallecidas también puede modificar la composición de las defunciones. La proporción de defunciones de personas de 65 años o más pasó del `r pct(round(pct_65_periodo[["Antes"]], 1))` % antes de la pandemia al `r pct(round(pct_65_periodo[["Pandemia"]], 1))` % durante y al `r pct(round(pct_65_periodo[["Después"]], 1))` % después. La @tbl-causas-edad muestra la participación de cada causa dentro de cada grupo de edad, lo que permite separar ese efecto.
+
+Las enfermedades respiratorias perdieron participación en ambos grupos: en las personas de 65 años o más pasaron del `r part_edad("65 o más", "Respiratorias", "Antes")` % antes de la pandemia al `r part_edad("65 o más", "Respiratorias", "Después")` % después, y en las menores de 65 años, del `r part_edad("Menos de 65", "Respiratorias", "Antes")` % al `r part_edad("Menos de 65", "Respiratorias", "Después")` %. Como estas enfermedades pesan más entre las personas mayores, el envejecimiento por sí solo habría aumentado su participación; por lo tanto, su caída no se explica por el cambio en la edad de las personas fallecidas.
+
+En cambio, las enfermedades circulatorias tuvieron después de la pandemia una participación menor que antes dentro de cada grupo de edad (`r part_edad("Menos de 65", "Circulatorias", "Después")` % frente a `r part_edad("Menos de 65", "Circulatorias", "Antes")` % en menores de 65 años, y `r part_edad("65 o más", "Circulatorias", "Después")` % frente a `r part_edad("65 o más", "Circulatorias", "Antes")` % en personas de 65 años o más). Esto sugiere que parte de su recuperación en el total responde a que una mayor proporción de las defunciones ocurre en edades avanzadas, donde estas enfermedades son más frecuentes. Las causas externas se concentran en las personas menores de 65 años, donde representan cerca de una de cada cuatro defunciones, y en ese grupo recuperaron su participación previa a la pandemia (`r part_edad("Menos de 65", "Externas", "Después")` % frente a `r part_edad("Menos de 65", "Externas", "Antes")` %).
+
+Estas cifras describen la composición de las defunciones dentro de cada grupo de edad y no su riesgo de morir, ya que no consideran el tamaño de la población de cada grupo.
+
 ## Evolución de las causas de muerte
 
 ### Comparación de defunciones observadas frente a la tendencia esperada
@@ -404,9 +443,11 @@ Las enfermedades circulatorias perdieron participación antes de la pandemia (de
 
 Por sexo, la diferencia más marcada se da en las causas externas, que en 2024 representaron el 16,0 % de las defunciones masculinas y el 5,7% de las femeninas, cerca de 2,8 veces más. Los hombres pasaron de 1 977 muertes por esta causa en 2020 a 2 764 en 2024, mientras que las mujeres se mantuvieron entre 600 y 700 casos al año. Las circulatorias y el cáncer pesan más entre las mujeres.
 
+Por grupo de edad, la caída de las respiratorias se observa tanto en menores de 65 años como en personas de 65 años o más, por lo que no se explica por el envejecimiento. En cambio, dentro de cada grupo de edad las circulatorias pesaron menos después de la pandemia que antes, de modo que parte de su aumento en el total se relaciona con que una mayor proporción de las defunciones ocurre en edades avanzadas.
+
 Estos hallazgos tienen implicaciones para la salud pública y para el análisis actuarial. Que las circulatorias y las causas externas en hombres superen su tendencia previa señala dónde conviene concentrar la vigilancia. Que las respiratorias queden por debajo de lo esperado no debe leerse como una mejora en la supervivencia, porque los datos no permiten identificar sus causas. Para fines actuariales, los patrones de mortalidad deben evaluarse con tasas y no solo con participaciones.
 
-El análisis tiene limitaciones. Los porcentajes describen la composición de las defunciones y no la mortalidad de la población; el modelo no controla por edad ni por tamaño poblacional, pese al envejecimiento descrito en la introducción; 2024 podría estar incompleto; y la categoría «Otras» (26,5% de las defunciones) no se analizó. Como trabajo futuro, se recomienda estimar tasas estandarizadas por edad y analizar las diferencias entre los grupos de menos de 65 años y de 65 años o más.
+El análisis tiene limitaciones. Los porcentajes describen la composición de las defunciones y no la mortalidad de la población; la tendencia de cada causa no controla por edad ni por tamaño poblacional, y la comparación por grupos de edad solo distingue dos grupos amplios; 2024 podría estar incompleto; y la categoría «Otras» (26,5% de las defunciones) no se analizó. Como trabajo futuro, se recomienda estimar tasas estandarizadas por edad con grupos de edad más detallados.
 
 \newpage
 
