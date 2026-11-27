@@ -52,6 +52,8 @@ format:
           \vspace{0.7em}
           {\small Alessia Aguilar Badilla · Alonso José Alpízar Brenes · Mariano Morales Carvajal\par
            Derek Escobar Jaramillo · Deilany Fuentes Barquero\par}
+          \vspace{0.3em} 
+          {\footnotesize\color{gray} \@date\par}
           \end{center}
           \vspace{-0.4em}
           {\color{azul}\noindent\rule{\linewidth}{0.8pt}}\par
