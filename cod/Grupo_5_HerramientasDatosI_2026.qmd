@@ -276,7 +276,7 @@ ggplot(porcentaje_sexo,
             hjust = -0.1, size = 3, colour = "#2B5C8A") +
   facet_wrap(~ sexo) +
   scale_x_continuous(breaks = seq(2005, 2024, 5),
-                     expand = expansion(mult = c(0.02, 0.35))) +
+                     expand = expansion(mult = c(0.02, 0.45))) +
   scale_y_continuous(labels = scales::label_percent(), limits = c(0, 0.34)) +
   labs(title = "Las causas externas pesan tres veces más en los hombres",
        x = NULL, y = "Porcentaje de las defunciones") +
