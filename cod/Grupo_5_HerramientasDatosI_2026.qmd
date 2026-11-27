@@ -230,7 +230,9 @@ participacion |>
                 \(x) pct(round(x, 1)))) |>
   knitr::kable(col.names = c("Grupo", "Causa de muerte",
                              "2005", "2019", "2021", "2024"),
-               align = c("l", "l", "r", "r", "r", "r"))
+               align = c("l", "l", "r", "r", "r", "r")) |>
+  kableExtra::kable_styling(latex_options = "repeat_header",
+                            repeat_header_text = "(continuación)")
 ```
 
 La @fig-respiratorias muestra que las enfermedades circulatorias y el cáncer mantuvieron las mayores participaciones entre las cinco categorías analizadas durante 2005–2024. Sin embargo, su evolución fue distinta. Según la @tbl-resultados, las enfermedades circulatorias pasaron del 29,2 % de las defunciones en 2005 al 25,6 % en 2019, mientras que el cáncer permaneció relativamente estable, con participaciones del 22,6 % y 22,7 %, respectivamente. Esto evidencia que la composición de las defunciones ya presentaba cambios antes de la pandemia.
