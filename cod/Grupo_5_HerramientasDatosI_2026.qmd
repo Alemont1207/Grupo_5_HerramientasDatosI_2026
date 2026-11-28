@@ -192,10 +192,25 @@ Con los datos de 2005 a 2019 se ajustó, para cada causa y sexo, la regresión $
 ## Análisis exploratorio
 
 ```{r}
+#| label: tbl-resultados
+#| tbl-cap: "Participación porcentual de las principales causas de muerte según sexo y año seleccionado. Costa Rica, 2005–2024. Fuente: elaboración propia con datos del INEC (2025)."
+
+participacion |>
+  mutate(across(c(`2005`, `2019`, `2021`, `2024`),
+                \(x) pct(round(x, 1)))) |>
+  knitr::kable(col.names = c("Grupo", "Causa de muerte",
+                             "2005", "2019", "2021", "2024"),
+               align = c("l", "l", "r", "r", "r", "r")) |>
+  kableExtra::kable_styling(latex_options = "repeat_header",
+                            repeat_header_text = "(continuación)")
+```
+
+```{r}
 #| label: fig-respiratorias
 #| fig-cap: "Evolución de la participación porcentual de las principales causas de muerte en Costa Rica, 2005–2024. Fuente: elaboración propia con datos del INEC (2025)."
 #| fig-width: 6.5
 #| fig-height: 3.6
+#| fig-pos: "H"
 
 respiratorias <- porcentaje_anual |> filter(causa == "Respiratorias")
 etiquetas     <- porcentaje_anual |> filter(año.defuncion == 2024)
@@ -221,20 +236,6 @@ ggplot(porcentaje_anual, aes(x = año.defuncion, y = porcentaje, group = causa))
         plot.title.position = "plot")
 ```
 
-```{r}
-#| label: tbl-resultados
-#| tbl-cap: "Participación porcentual de las principales causas de muerte según sexo y año seleccionado. Costa Rica, 2005–2024. Fuente: elaboración propia con datos del INEC (2025)."
-
-participacion |>
-  mutate(across(c(`2005`, `2019`, `2021`, `2024`),
-                \(x) pct(round(x, 1)))) |>
-  knitr::kable(col.names = c("Grupo", "Causa de muerte",
-                             "2005", "2019", "2021", "2024"),
-               align = c("l", "l", "r", "r", "r", "r")) |>
-  kableExtra::kable_styling(latex_options = "repeat_header",
-                            repeat_header_text = "(continuación)")
-```
-
 La @fig-respiratorias muestra que las enfermedades circulatorias y el cáncer mantuvieron las mayores participaciones entre las cinco categorías analizadas durante 2005–2024. Sin embargo, su evolución fue distinta. Según la @tbl-resultados, las enfermedades circulatorias pasaron del 29,2 % de las defunciones en 2005 al 25,6 % en 2019, mientras que el cáncer permaneció relativamente estable, con participaciones del 22,6 % y 22,7 %, respectivamente. Esto evidencia que la composición de las defunciones ya presentaba cambios antes de la pandemia.
 
 En 2021 se observa una reducción en la participación de las cinco categorías. Las enfermedades circulatorias descendieron al 23,1 % y el cáncer al 18,7 %, mientras que las enfermedades respiratorias pasaron del 9,2 % en 2019 al 5,6 % en 2021. Estas disminuciones deben interpretarse considerando que las defunciones por COVID-19 se clasificaron por separado, pero sí se incluyeron en el total utilizado para calcular los porcentajes.
@@ -248,6 +249,7 @@ Por otra parte, en 2024 las enfermedades circulatorias alcanzaron el 27,9 %, sup
 #| fig-cap: "Evolución de la participación porcentual de las principales causas de muerte según sexo, Costa Rica, 2005–2024. La zona gris marca la pandemia (2020–2021). Fuente: elaboración propia con datos del INEC (2025)."
 #| fig-width: 6.5
 #| fig-height: 3.7
+#| fig-pos: "H"
 
 externas <- porcentaje_sexo |> filter(causa == "Externas")
 
